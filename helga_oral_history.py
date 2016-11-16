@@ -1,6 +1,7 @@
-from helga.plugins import preprocessor
+import datetime
 
 from helga.db import db
+from helga.plugins import preprocessor
 
 
 def redact(message):
@@ -11,7 +12,6 @@ def redact(message):
 
     return message
 
-
 @preprocessor
 def oral_history(client, channel, nick, message):
 
@@ -21,6 +21,7 @@ def oral_history(client, channel, nick, message):
         'channel': channel,
         'nick': nick,
         'message': redacted_message,
+        'timestamp': datetime.datetime.utcnow(),
     })
 
     return (channel, nick, redacted_message)
