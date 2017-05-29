@@ -61,7 +61,17 @@ def oral_history(client, channel, nick, message, *args):
 
         return (channel, nick, redacted_message)
 
-    if len(args) == 2:
+
+    # leaderboard
+
+    pipeline = [
+            { '$match': { 'channel': channel,
+            }},
+            { '$group': {'_id': '$nick', 'count': {'$sum': 1}}},
+            { '$sort': SON([('count', -1), ('_id', -1)])}
+        ]
+
+    if len(args[1]) == 1:
 
         start_date = datetime.datetime.utcnow()
         #return args[1]
@@ -76,24 +86,17 @@ def oral_history(client, channel, nick, message, *args):
 
         logger.debug('start_date: {}'.format(start_date))
 
-        pipeline = [
-            { "$match": {
-                "channel": channel,
-                "timestamp": {"$gte": start_date },
-            }},
-            { "$group": {"_id": "$nick", "count": {"$sum": 1}}},
-            { "$sort": SON([("count", -1), ("_id", -1)])}
-        ]
+        pipeline[0]['$match']['timestamp'] = { '$gte': start_date }
 
-        top_5 = [nick for nick in db.logger.aggregate(pipeline)][:5]
+    top_5 = [nick for nick in db.logger.aggregate(pipeline)][:5]
 
-        logger.debug('top_5: {}'.format(top_5))
+    logger.debug('top_5: {}'.format(top_5))
 
-        place = 0
-        for nick in top_5:
-            client.msg(channel, '{}. {} [{}]'.format(
-                place + 1,
-                obfuscate_nick(top_5[place]['_id']),
-                top_5[place]['count'],
-            ))
-            place += 1
+    place = 0
+    for nick in top_5:
+        client.msg(channel, '{}. {} [{}]'.format(
+            place + 1,
+            obfuscate_nick(top_5[place]['_id']),
+            top_5[place]['count'],
+        ))
+        place += 1
