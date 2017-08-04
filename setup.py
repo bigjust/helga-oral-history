@@ -24,7 +24,7 @@ setup(
     zip_safe=True,
     entry_points = dict(
         helga_plugins = [
-            'oral_history = helga_oral_history:oral_history',
+            'oral_history = helga_oral_history:OralHistory',
         ],
     ),
 )
