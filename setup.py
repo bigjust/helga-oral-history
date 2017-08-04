@@ -19,6 +19,9 @@ setup(
     author_email='bigjust@lambdaphil.es',
     license='LICENSE',
     packages=find_packages(),
+    install_requires = (
+        'requests',
+    ),
     include_package_data=True,
     py_modules=['helga_oral_history'],
     zip_safe=True,

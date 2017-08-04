@@ -1,5 +1,6 @@
 import datetime
 import random
+import requests
 
 from bson.son import SON
 
@@ -83,3 +84,37 @@ class OralHistory(Command):
                         top_5[place]['count'],
                     ))
                     place += 1
+
+            if args[0] == 'search':
+
+                search_terms = ' '.join(args[1:])
+
+                pipeline = [{
+                    '$match': {
+                        'message': {'$regex': ' '.join(args[1:])},
+                        'channel': channel
+                    }},
+                ]
+
+                results = db.logger.aggregate(pipeline)
+
+                dpaste_doc = ''
+                for result in db.logger.aggregate(pipeline):
+                    dpaste_doc += u'<{}> {}\n'.format(result['nick'], result['message'])
+
+                if dpaste_doc:
+                    payload = {
+                        'content': dpaste_doc,
+                        'syntax': 'irc',
+                        'expiry_days':'1',
+                    }
+
+                    resp = requests.post(
+                        'http://dpaste.com/api/v2/',
+                        data=payload,
+                    )
+
+                    return resp.content
+
+                else:
+                    return 'no results'
