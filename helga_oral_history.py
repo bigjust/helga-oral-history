@@ -100,6 +100,8 @@ class OralHistory(Command):
 
                 dpaste_doc = ''
                 for result in db.logger.aggregate(pipeline):
+                    if result['message'].startswith('oral search', 1):
+                        continue
                     dpaste_doc += u'<{}> {}\n'.format(result['nick'], result['message'])
 
                 if dpaste_doc:
