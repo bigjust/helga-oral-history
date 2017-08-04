@@ -87,8 +87,6 @@ class OralHistory(Command):
 
             if args[0] == 'search':
 
-                search_terms = ' '.join(args[1:])
-
                 pipeline = [{
                     '$match': {
                         'message': {'$regex': ' '.join(args[1:])},
@@ -96,9 +94,8 @@ class OralHistory(Command):
                     }},
                 ]
 
-                results = db.logger.aggregate(pipeline)
-
                 dpaste_doc = ''
+
                 for result in db.logger.aggregate(pipeline):
                     if result['message'].startswith('oral search', 1):
                         continue
