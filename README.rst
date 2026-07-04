@@ -1,12 +1,19 @@
 helga-oral-history
-===========
+==================
 
-We're going to, sort of, log into mongo. This will be used for
-searching purpose as well as for markov chain building
-*evil_grin.jpg*.
+Log channel messages into PostgreSQL for search and "top" (leaderboard)
+commands. Works with helga 2.x.
 
-Exceptions:
-Stuff in brackets ([]) will be logged as [REDACTED] [NOT IMPLEMENTED]
+Stuff in brackets ``[]`` is logged as ``[REDACTED]``.
+
+Commands
+--------
+
+``!oral top [day|week]`` — top 5 chatters in the channel (all-time, or
+last day/week).
+
+``!oral search <pattern>`` — regex search across logged messages, posted to
+dpaste.
 
 License
 -------

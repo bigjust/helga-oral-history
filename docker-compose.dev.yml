@@ -1,0 +1,22 @@
+# Development overlay: mount the plugin source into the helga container and
+# install it editable so helga discovers the entry point.
+#
+# Usage:
+#   docker compose -f ../helga/docker-compose.yml -f docker-compose.dev.yml up -d
+#   docker compose -f ../helga/docker-compose.yml -f docker-compose.dev.yml exec helga bash
+#   # Inside the container:
+#   pip install -e /app/helga-oral-history
+#   helga operator reload oral_history
+#
+# Or do it all at once with a restart:
+#   docker compose -f ../helga/docker-compose.yml -f docker-compose.dev.yml up -d --force-recreate helga
+
+services:
+  helga:
+    volumes:
+      # Mount this plugin repo so it can be installed editable inside the container
+      - .:/app/helga-oral-history:Z
+    environment:
+      # Enable the plugin at startup
+      - HELGA_ENABLED_PLUGINS=oral_history
+      - HELGA_DEFAULT_CHANNEL_PLUGINS=oral_history

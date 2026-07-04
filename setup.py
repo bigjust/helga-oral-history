@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-version = '0.2.0'
+version = '1.0.0'
 
 setup(
     name="helga-oral-history",
@@ -20,7 +20,7 @@ setup(
     license='LICENSE',
     packages=find_packages(),
     install_requires = (
-        'requests',
+        # psycopg2 comes via helga itself
     ),
     include_package_data=True,
     py_modules=['helga_oral_history'],
