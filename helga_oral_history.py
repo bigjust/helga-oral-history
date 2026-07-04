@@ -54,6 +54,7 @@ def obfuscate_nick(nick):
 class OralHistory(Command):
 
     command = 'oral'
+    help = 'usage: !oral top [day|week]  — top 5 chatters; !oral search <pattern> — regex search messages'
 
     def preprocess(self, client, channel, nick, message):
         redacted_message = redact(message)
