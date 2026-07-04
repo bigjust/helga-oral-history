@@ -1,11 +1,18 @@
-import datetime
+from datetime import datetime, timedelta, timezone
 import random
 import re
 import urllib.parse
 import urllib.request
 
+import warnings
+
 from helga import log
 from helga.db import get_connection
+
+# Suppress helga's global shlex FutureWarning — this plugin doesn't rely on
+# the framework-wide COMMAND_ARGS_SHLEX default.
+warnings.filterwarnings('ignore', category=FutureWarning,
+                        message='Command arg parsing will default to shlex')
 from helga.plugins import Command
 
 logger = log.getLogger(__name__)
@@ -58,7 +65,7 @@ class OralHistory(Command):
                 cur.execute(
                     f"INSERT INTO {_LOG_TABLE} (channel, nick, message, timestamp) "
                     "VALUES (%s, %s, %s, %s)",
-                    (channel, nick, redacted_message, datetime.datetime.utcnow()),
+                    (channel, nick, redacted_message, datetime.now(timezone.utc)),
                 )
             conn.commit()
 
@@ -77,11 +84,11 @@ class OralHistory(Command):
         if args[0] == 'top':
             start_date = None
             if len(args) > 1:
-                start_date = datetime.datetime.utcnow()
+                start_date = datetime.now(timezone.utc)
                 if args[1] == 'day':
-                    start_date -= datetime.timedelta(days=1)
+                    start_date -= timedelta(days=1)
                 elif args[1] == 'week':
-                    start_date -= datetime.timedelta(days=7)
+                    start_date -= timedelta(days=7)
 
             with conn.cursor() as cur:
                 if start_date:
