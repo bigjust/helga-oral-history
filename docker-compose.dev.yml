@@ -1,0 +1,22 @@
+# Development overlay: mount the plugin source into the helga container so you
+# can pip install -e it and iterate without rebuilding the image.
+#
+# Compose v2 resolves relative paths from the PROJECT directory (parent of the
+# first -f file), so paths here are relative to ../helga.
+#
+# Usage (from helga repo root):
+#   cd ~/code/helga
+#   docker compose -f docker-compose.yml -f ../helga-oral-history/docker-compose.dev.yml \
+#       up -d --force-recreate helga
+#   docker compose exec helga pip install -e /app/helga-oral-history
+#
+# After editing the plugin source, reload it from IRC:
+#   !operator reload oral_history
+#
+# helga defaults to loading ALL installed plugins (ENABLED_PLUGINS=True), so no
+# settings change is needed — just pip install -e and reload.
+
+services:
+  helga:
+    volumes:
+      - ../helga-oral-history:/app/helga-oral-history:Z
