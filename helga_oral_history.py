@@ -9,16 +9,17 @@ import warnings
 from helga import log
 from helga.db import get_connection
 
-# Suppress helga's global shlex FutureWarning — this plugin doesn't rely on
-# the framework-wide COMMAND_ARGS_SHLEX default.
-warnings.filterwarnings('ignore', category=FutureWarning,
-                        message='Command arg parsing will default to shlex')
-from helga.plugins import Command
+with warnings.catch_warnings():
+    warnings.filterwarnings('ignore', category=FutureWarning,
+                            message='Command arg parsing will default to shlex')
+    from helga.plugins import Command
 
 logger = log.getLogger(__name__)
 
 # Table for the message log — created lazily on first DB use
 _LOG_TABLE = "oral_history_log"
+_SEARCH_LIMIT = 200
+_TABLE_READY = False
 
 # ponytail: naive bracket redaction, no nesting or escape handling
 _BRACKET_RE = re.compile(r'\[[^\]]*\]')
@@ -32,10 +33,17 @@ def _ensure_table(conn):
                 channel TEXT NOT NULL,
                 nick TEXT NOT NULL,
                 message TEXT NOT NULL,
-                timestamp TIMESTAMP NOT NULL DEFAULT NOW()
+                timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
             )
         """)
     conn.commit()
+
+def _ensure_table_once(conn):
+    global _TABLE_READY
+    if _TABLE_READY:
+        return
+    _ensure_table(conn)
+    _TABLE_READY = True
 
 
 def redact(message):
@@ -61,7 +69,7 @@ class OralHistory(Command):
 
         conn = get_connection()
         if conn is not None:
-            _ensure_table(conn)
+            _ensure_table_once(conn)
             with conn.cursor() as cur:
                 cur.execute(
                     f"INSERT INTO {_LOG_TABLE} (channel, nick, message, timestamp) "
@@ -81,6 +89,7 @@ class OralHistory(Command):
         conn = get_connection()
         if conn is None:
             return 'database unavailable'
+        _ensure_table_once(conn)
 
         if args[0] == 'top':
             start_date = None
@@ -118,14 +127,18 @@ class OralHistory(Command):
                 ))
 
         if args[0] == 'search':
+            if len(args) < 2:
+                return 'usage: !oral search <pattern>'
             search_term = ' '.join(args[1:])
+            if not search_term.strip():
+                return 'usage: !oral search <pattern>'
 
             with conn.cursor() as cur:
                 cur.execute(
                     f"SELECT nick, message FROM {_LOG_TABLE} "
                     "WHERE message ~ %s AND channel = %s "
-                    "ORDER BY timestamp",
-                    (search_term, channel),
+                    "ORDER BY timestamp DESC LIMIT %s",
+                    (search_term, channel, _SEARCH_LIMIT),
                 )
                 results = cur.fetchall()
 
@@ -141,9 +154,9 @@ class OralHistory(Command):
                     'syntax': 'irc',
                     'expiry_days': '1',
                 }).encode()
-                resp = urllib.request.urlopen(
-                    'http://dpaste.com/api/v2/', data=data
-                )
-                return resp.read().decode()
+                with urllib.request.urlopen(
+                    'https://dpaste.com/api/v2/', data=data, timeout=10
+                ) as resp:
+                    return resp.read().decode()
             else:
                 return 'no results'
